@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ccScoreSearch - 审计2501班高数成绩查询系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #4A6FFF;
+            --secondary-color: #FF7B54;
+            --accent-color: #6C5CE7;
+            --success-color: #00B894;
+            --warning-color: #FDCB6E;
+            --danger-color: #E17055;
+            --background-color: #F8F9FA;
+            --card-background: #FFFFFF;
+            --text-primary: #2D3436;
+            --text-secondary: #636E72;
+            --border-radius: 16px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(74, 111, 255, 0.05) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 123, 84, 0.05) 0%, transparent 25%);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: 16px;
+        }
+
+        .blessing {
+            margin-top: 16px;
+            font-size: 1.1em;
+            color: var(--secondary-color);
+            font-weight: 500;
+            min-height: 28px;
+            transition: opacity 0.5s ease;
+            font-style: italic;
+        }
+
+        .glass-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .search-section {
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: var(--card-background);
+            font-family: inherit;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(74, 111, 255, 0.15);
+        }
+
+        .btn {
+            padding: 16px 28px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(74, 111, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-primary);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 111, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .student-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .student-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .student-item:hover {
+            background: rgba(74, 111, 255, 0.05);
+            transform: translateX(5px);
+        }
+
+        /* 震动动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        .student-item.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .permission-hint {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.03);
+            padding: 4px 8px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .student-item:hover .permission-hint {
+            opacity: 1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 6px 20px rgba(74, 111, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .grade-distribution {
+            margin-top: 24px;
+        }
+
+        .grade-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            align-items: center;
+        }
+
+        .grade-item:last-child {
+            border-bottom: none;
+        }
+
+        .report-section {
+            display: none;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: var(--border-radius);
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .score-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 24px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(74, 111, 255, 0.2);
+        }
+
+        .score-value {
+            font-size: 3em;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .analysis-section {
+            margin: 24px 0;
+        }
+
+        .analysis-item {
+            padding: 20px;
+            margin: 12px 0;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .suggestion-item, .scenario-item {
+            padding: 16px 20px;
+            margin: 8px 0;
+            background: rgba(0, 187, 148, 0.1);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .warning-item {
+            padding: 16px 20px;
+            margin: 8px 0;
+            background: rgba(253, 203, 110, 0.1);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .danger-item {
+            padding: 16px 20px;
+            margin: 8px 0;
+            background: rgba(225, 112, 85, 0.1);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(74, 111, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .student-name {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(74, 111, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 8px;
+            color: var(--primary-color);
+        }
+
+        .no-exam-card {
+            background: linear-gradient(135deg, var(--warning-color), var(--danger-color));
+        }
+
+        .exam-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .exam-first {
+            background: rgba(0, 187, 148, 0.1);
+            color: var(--success-color);
+        }
+
+        .exam-makeup {
+            background: rgba(253, 203, 110, 0.1);
+            color: var(--warning-color);
+        }
+
+        .exam-none {
+            background: rgba(225, 112, 85, 0.1);
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header h1 {
+                font-size: 2.2em;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .permission-hint {
+                position: static;
+                transform: none;
+                margin-top: 8px;
+                opacity: 1;
+                font-size: 0.75em;
+                text-align: center;
+            }
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--danger-color);
+            background: rgba(225, 112, 85, 0.1);
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+        }
+
+        .permission-notice {
+            text-align: center;
+            padding: 16px;
+            margin: 16px 0;
+            background: rgba(253, 203, 110, 0.1);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--warning-color);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">cc</div>
+                <h1>ScoreSearch</h1>
+            </div>
+            <div class="subtitle">审计2501班 · 高等数学成绩分析系统</div>
+            <div id="blessing" class="blessing"></div>
+        </div>
+
+        <!-- 搜索区域 -->
+        <div class="glass-card search-section">
+            <div class="section-title">🔍 查询成绩</div>
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="输入学号或姓名...">
+                <button onclick="searchStudent()" class="btn btn-primary">
+                    <span>查询</span>
+                </button>
+            </div>
+            <div class="quick-actions">
+                <button onclick="showAllStudents()" class="btn btn-secondary">
+                    <span>👥 所有学生</span>
+                </button>
+                <button onclick="showClassStats()" class="btn btn-secondary">
+                    <span>📈 班级统计</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 加载提示 -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div>加载中...</div>
+        </div>
+
+        <!-- 学生列表 -->
+        <div id="studentList" class="glass-card student-list" style="display: none;">
+            <div class="section-title">👥 学生名单</div>
+            <div class="permission-notice">
+                ⚠️ 注意：您只能查看自己的成绩，点击其他同学将提示无权限
+            </div>
+            <div id="studentsContainer"></div>
+        </div>
+
+        <!-- 班级统计 -->
+        <div id="classStats" class="glass-card" style="display: none;">
+            <div class="section-title">📊 班级统计</div>
+            <div id="statsContainer"></div>
+        </div>
+
+        <!-- 成绩报告 -->
+        <div id="studentReport" class="glass-card report-section">
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 祝福语数组 - 风趣幽默版
+        const blessings = [
+            "高数虐我千百遍，我待高数如初恋～",
+            "今天的你比昨天更博学了一点点！",
+            "数学不会骗人，不会就是不会 😜",
+            "高数成绩单：你的努力，分数看得见！",
+            "别低头，皇冠会掉；别放弃，高数要考！",
+            "学习高数就像打游戏，多练级才能打boss！",
+            "高数不会辜负每一个认真对待它的人",
+            "今天你高数了吗？成绩单在看着你呢！",
+            "高数成绩单：你的努力，终将美好！",
+            "微积分不会，人生路白走！开玩笑的啦～"
+        ];
+
+        // 显示加载状态
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // 更新祝福语
+        function updateBlessing() {
+            const blessingElement = document.getElementById('blessing');
+            const randomIndex = Math.floor(Math.random() * blessings.length);
+            const newBlessing = blessings[randomIndex];
+
+            // 淡出效果
+            blessingElement.style.opacity = 0;
+
+            setTimeout(() => {
+                blessingElement.textContent = newBlessing;
+                // 淡入效果
+                blessingElement.style.opacity = 1;
+            }, 500);
+        }
+
+        // 搜索学生
+        async function searchStudent() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (!query) {
+                alert('请输入学号或姓名进行查询');
+                return;
+            }
+
+            showLoading(true);
+            hideAllSections();
+
+            try {
+                const response = await fetch(`/api/student/${encodeURIComponent(query)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    showStudentReport(result.data);
+                } else {
+                    document.getElementById('studentReport').style.display = 'block';
+                    document.getElementById('reportContent').innerHTML = `
+                        <div class="error-message">
+                            <h3>❌ 未找到学生信息</h3>
+                            <p>未找到与 "${query}" 对应的学生信息，请检查输入是否正确。</p>
+                            <p>提示：可以点击"所有学生"按钮查看完整名单</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('studentReport').style.display = 'block';
+                document.getElementById('reportContent').innerHTML = `
+                    <div class="error-message">
+                        <h3>❌ 查询失败</h3>
+                        <p>查询过程中出现错误，请检查网络连接或稍后再试。</p>
+                    </div>
+                `;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示所有学生
+        async function showAllStudents() {
+            showLoading(true);
+            hideAllSections();
+
+            try {
+                const response = await fetch('/api/students');
+                const result = await response.json();
+
+                if (result.success) {
+                    displayStudentList(result.data);
+                } else {
+                    alert('获取学生列表失败');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('获取学生列表失败');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示班级统计
+        async function showClassStats() {
+            showLoading(true);
+            hideAllSections();
+
+            try {
+                const response = await fetch('/api/class_stats');
+                const result = await response.json();
+
+                if (result.success) {
+                    displayClassStats(result.data);
+                } else {
+                    alert('获取班级统计失败');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('获取班级统计失败');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 隐藏所有内容区域
+        function hideAllSections() {
+            document.getElementById('studentList').style.display = 'none';
+            document.getElementById('classStats').style.display = 'none';
+            document.getElementById('studentReport').style.display = 'none';
+        }
+
+        // 显示学生列表
+        function displayStudentList(students) {
+            const container = document.getElementById('studentsContainer');
+            container.innerHTML = '';
+
+            students.forEach(student => {
+                const item = document.createElement('div');
+                item.className = 'student-item';
+
+                // 获取姓名的第一个字符作为头像
+                const firstChar = student.student_name.charAt(0);
+
+                item.innerHTML = `
+                    <div class="student-avatar">${firstChar}</div>
+                    <div>
+                        <strong>${student.student_name}</strong>
+                        <div style="font-size: 0.9em; color: var(--text-secondary); margin-top: 4px;">
+                            ${student.student_id}
+                        </div>
+                    </div>
+                    <div class="permission-hint">仅可查看本人成绩</div>
+                `;
+
+                // 修改点击事件：震动并提示无权查看
+                item.onclick = () => {
+                    // 添加震动效果
+                    item.classList.add('shake');
+
+                    // 0.5秒后移除震动效果
+                    setTimeout(() => {
+                        item.classList.remove('shake');
+                    }, 500);
+
+                    // 显示权限提示
+                    showPermissionHint(student.student_name);
+                };
+
+                container.appendChild(item);
+            });
+
+            document.getElementById('studentList').style.display = 'block';
+        }
+
+        // 显示权限提示
+        function showPermissionHint(studentName) {
+            // 在祝福语区域显示提示
+            const blessingElement = document.getElementById('blessing');
+            const originalBlessing = blessingElement.textContent;
+
+            blessingElement.textContent = `⚠️ 无权查看 ${studentName} 的成绩，请输入自己的学号查询`;
+            blessingElement.style.color = 'var(--warning-color)';
+
+            // 3秒后恢复原来的祝福语
+            setTimeout(() => {
+                blessingElement.style.color = 'var(--secondary-color)';
+                updateBlessing();
+            }, 3000);
+        }
+
+        // 显示班级统计
+        function displayClassStats(stats) {
+            const container = document.getElementById('statsContainer');
+
+            let distributionHtml = '<div class="grade-distribution"><div class="section-title">等级分布</div>';
+            for (const [grade, count] of Object.entries(stats.grade_distribution)) {
+                const percentage = ((count / stats.total_students) * 100).toFixed(1);
+                distributionHtml += `
+                    <div class="grade-item">
+                        <span>${grade}</span>
+                        <span><strong>${count}</strong> 人 (${percentage}%)</span>
+                    </div>
+                `;
+            }
+            distributionHtml += '</div>';
+
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div>平均分</div>
+                        <div class="stat-value">${stats.average_score}</div>
+                        <div>加权平均</div>
+                    </div>
+                    <div class="stat-item">
+                        <div>总人数</div>
+                        <div class="stat-value">${stats.total_students}</div>
+                        <div>已考试学生</div>
+                    </div>
+                </div>
+                ${distributionHtml}
+            `;
+
+            document.getElementById('classStats').style.display = 'block';
+        }
+
+        // 显示学生成绩报告
+        function showStudentReport(data) {
+            const container = document.getElementById('reportContent');
+
+            // 根据考试类型设置样式
+            let examTypeClass = '';
+            if (data.exam_type === '第一次考试') {
+                examTypeClass = 'exam-first';
+            } else if (data.exam_type === '补考') {
+                examTypeClass = 'exam-makeup';
+            } else {
+                examTypeClass = 'exam-none';
+            }
+
+            let reportHtml = `
+                <div class="student-name">${data.student_name}</div>
+
+                <!-- 基本信息 -->
+                <div class="info-row">
+                    <span><strong>学号:</strong> ${data.student_id}</span>
+                    <span><strong>考试情况:</strong>
+                        <span class="exam-type-badge ${examTypeClass}">${data.exam_type}</span>
+                    </span>
+                </div>
+
+                <!-- 成绩对比 -->
+                <div class="score-grid">
+                    <div class="score-card ${data.exam_score === null ? 'no-exam-card' : ''}">
+                        <div>期中考试</div>
+                        <div class="score-value">${data.exam_score !== null ? data.exam_score : '—'}</div>
+                        <div>${data.exam_grade}</div>
+                    </div>
+                    <div class="score-card">
+                        <div>综合成绩</div>
+                        <div class="score-value">${data.weighted_score}</div>
+                        <div>${data.weighted_grade}</div>
+                    </div>
+                </div>
+
+                <!-- 成绩明细 -->
+                <div class="info-row">
+                    <span><strong>平时作业:</strong> ${data.homework_percent.toFixed(1)}分 (权重40%)</span>
+                    <span><strong>期中考试:</strong> ${data.exam_score !== null ? data.exam_score + '分' : '未参加'} (权重60%)</span>
+                </div>
+            `;
+
+            // 学习分析
+            if (data.analysis) {
+                reportHtml += `<div class="section-title">学习分析</div>`;
+
+                if (data.analysis.strength) {
+                    reportHtml += `<div class="analysis-item">✅ ${data.analysis.strength}</div>`;
+                }
+                if (data.analysis.challenge) {
+                    reportHtml += `<div class="analysis-item">⚠️ ${data.analysis.challenge}</div>`;
+                }
+                if (data.analysis.special_note) {
+                    reportHtml += `<div class="analysis-item">💡 ${data.analysis.special_note}</div>`;
+                }
+            }
+
+            // 改进建议
+            if (data.analysis && data.analysis.suggestions && data.analysis.suggestions.length > 0) {
+                reportHtml += `<div class="section-title">改进建议</div>`;
+                data.analysis.suggestions.forEach(suggestion => {
+                    // 根据建议内容确定样式
+                    let suggestionClass = 'suggestion-item';
+                    if (suggestion.includes('⚠️') || suggestion.includes('需要加强')) {
+                        suggestionClass = 'warning-item';
+                    } else if (suggestion.includes('👨‍🏫') || suggestion.includes('一对一辅导')) {
+                        suggestionClass = 'danger-item';
+                    }
+
+                    reportHtml += `<div class="${suggestionClass}">${suggestion}</div>`;
+                });
+            }
+
+            // 提升空间
+            if (data.improvement_scenarios && data.improvement_scenarios.length > 0) {
+                reportHtml += `<div class="section-title">提升空间</div>`;
+                data.improvement_scenarios.forEach(scenario => {
+                    reportHtml += `<div class="scenario-item">${scenario}</div>`;
+                });
+            }
+
+            container.innerHTML = reportHtml;
+            document.getElementById('studentReport').style.display = 'block';
+        }
+
+        // 回车键搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStudent();
+            }
+        });
+
+        // 页面加载完成后自动聚焦搜索框
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput').focus();
+
+            // 初始化祝福语
+            updateBlessing();
+
+            // 每30秒更新一次祝福语
+            setInterval(updateBlessing, 30000);
+        });
+    </script>
+</body>
+</html>
